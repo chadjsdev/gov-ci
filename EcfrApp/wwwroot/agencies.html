@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <base target="_parent">
+    <title>eCFR Data Analysis | Agencies</title>
+    <link href="Content/css/uswds.styles.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<div class="usa-overlay"></div>
+  <header class="usa-header usa-header--basic">
+    <div class="usa-nav-container">
+      <div class="usa-navbar">
+        <div class="usa-logo">
+          <em class="usa-logo__text"
+            ><a href="/" title="Home">eCFR Data Analysis</a></em>
+        </div>
+      </div>
+      <nav aria-label="Primary navigation," class="usa-nav">
+        <ul class="usa-nav__primary usa-accordion">
+          <li class="usa-nav__primary-item">
+            <a href="index.html" class="usa-nav-link">
+                <span>Home</span>
+            </a>
+          </li>
+          <li class="usa-nav__primary-item">
+            <button
+              type="button"
+              class="usa-accordion__button usa-nav__link usa-current"
+              aria-expanded="false"
+              aria-controls="basic-nav-section-one"
+            >
+              <span>Agencies</span>
+            </button>
+          </li>
+          <li class="usa-nav__primary-item">
+            <a href="maintenance.html" class="usa-nav-link">
+                <span>Maintenance</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+  <div class="usa-section">
+    <div class="grid-container">
+        <h2>Agencies</h2>
+        <div id="loading-agencies" class="loading" style="display: none;">Retrieving Agency Metrics...</div>
+        <div class="usa-table-container--scrollable" tabindex="0">
+          <table class="usa-table usa-table--striped" id="agencyTable" style="width: 100%">
+            <thead>
+                <tr>
+                    <th data-sortable scope="col" role="columnheader" style="width: 15%;">Name</th>
+                    <th data-sortable scope="col" role="columnheader" style="width: 15%;">Checksum</th>
+                    <th data-sortable scope="col" role="columnheader" style="width: 15%;">Word Count</th>
+                    <th data-sortable scope="col" role="columnheader" style="width: 15%;">Corrections Count</th>
+                </tr>
+            </thead>
+            <tbody id="agencyBody"></tbody>
+        </table>
+    </div>
+  </div>
+  <script>
+        async function loadAgencies() {
+            try {
+                const loadingIndicator = document.getElementById('loading-agencies');
+                loadingIndicator.style.display = 'block';
+
+                const response = await fetch('/api/ecfr/agency-sizes');
+                let agencies = await response.json();
+
+                console.log('Raw agencies response:', agencies);
+
+                if (agencies && agencies.$values) {
+                    agencies = agencies.$values;
+                }
+
+                if (!Array.isArray(agencies)) {
+                    console.error('Expected an array but got:', agencies);
+                    loadingIndicator.style.display = 'none';
+                    return;
+                }
+
+                // Remove duplicate agencies based on the 'slug' property
+                agencies = agencies.filter((agency, index, self) =>
+                    index === self.findIndex((a) => a.slug === agency.slug)
+                );
+
+                const tbody = document.getElementById('agencyBody');
+                tbody.innerHTML = '';
+                agencies.forEach(agency => {
+                    const row = document.createElement('tr');
+                    //const cfrRefs = (agency.cfrReferences || []).map(r => `${r.title} ${r.chapter}`).join(', ');
+                    const wordCount = agency.wordCount || 0;
+                    // Calculate client-side checksum
+                    const json = JSON.stringify(agency);
+                    // Use TextEncoder to encode the JSON string as UTF-8 bytes
+                    const utf8Bytes = new TextEncoder().encode(json);
+                    const clientChecksum = utf8Bytes.length;
+                    const checksumMatch = clientChecksum === agency.checksum ? 'Yes' : 'No';
+                    const correctionCount = agency.correctionCount || 0;
+
+                    // console.log('Serialized JSON:', json);
+                    // console.log('Calculated Checksum:', clientChecksum);
+                    // console.log('Agency Checksum:', agency.checksum);
+                                                      
+                    row.innerHTML = `<th scope="row">${agency.displayName}</th>`;
+                    if (checksumMatch == 'Yes') {
+                    row.innerHTML += `
+                                        <td data-sort-value="${agency.checksum}">
+                                          <img src="Content/img/green-check.png" alt="checksum passed" height="20" width="20">
+                                          </td>
+                                        `;
+                    } else {
+                    row.innerHTML += `
+                                        <td data-sort-value="${agency.checksum}">
+                                        <img src="Content/img/red-x.png" alt="checksum failed" height="20" width="20">
+                                        </div></td>
+                                        `;
+                    }
+                    row.innerHTML += `
+                                      <td data-sort-value="${wordCount}" class="font-mono-sm text-tabular text-right">${wordCount}</td>
+                                      <td data-sort-value="${correctionCount}" class="font-mono-sm text-tabular text-right">${correctionCount}</td>
+                    `;
+                    tbody.appendChild(row);
+                  
+
+                });
+
+                loadingIndicator.style.display = 'none';
+            } catch (error) {
+                console.error('Error:', error);
+                const loadingIndicator = document.getElementById('loading-agencies');
+                loadingIndicator.style.display = 'none';
+            }
+        }
+        
+        window.onload = () => {
+            loadAgencies();
+        };
+    </script>
+  <script src="Content/js/uswds.min.js" type="text/javascript"></script>
+</body>
+</html>

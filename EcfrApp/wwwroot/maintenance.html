@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <base target="_parent">
+    <title>eCFR Data Analysis | Maintenance</title>
+    <link href="Content/css/uswds.styles.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<div class="usa-overlay"></div>
+  <header class="usa-header usa-header--basic">
+    <div class="usa-nav-container">
+      <div class="usa-navbar">
+        <div class="usa-logo">
+          <em class="usa-logo__text"
+            ><a href="/" title="Home">eCFR Data Analysis</a></em>
+        </div>
+      </div>
+      <nav aria-label="Primary navigation," class="usa-nav">
+        <ul class="usa-nav__primary usa-accordion">
+          <li class="usa-nav__primary-item">
+            <a href="index.html" class="usa-nav-link">
+                <span>Home</span>
+            </a>
+          </li>
+          <li class="usa-nav__primary-item">
+            <a href="agencies.html" class="usa-nav-link">
+                <span>Agencies</span>
+            </a>
+          </li>
+          <li class="usa-nav__primary-item">
+            <button
+              type="button"
+              class="usa-accordion__button usa-nav__link usa-current"
+              aria-expanded="false"
+              aria-controls="basic-nav-section-one"
+            >
+              <span>Maintenance</span>
+            </button>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+  <div class="usa-section">
+    <div class="grid-container">
+        <ul class="usa-card-group">
+            <div id="loading-fa" class="loading" style="display: none;">Fetching Agencies...</div>
+            <li class="usa-card tablet-lg:grid-col-6 widescreen:grid-col-4">
+                <div class="usa-card__container">
+                <div class="usa-card__header">
+                    <h2>1. Fetch Agencies</h2>
+                </div>
+                <div class="usa-card__body">
+                    <p>Retrieve and store agency data from eCFR API.</p>
+                </div>
+                <div class="usa-card__footer">
+                    <a href="#" class="usa-button" onclick="fetchAgencies()">Fetch Agencies</a>
+                </div>
+                </div>
+            </li>
+            <div id="loading-fc" class="loading" style="display: none;">Fetching Corrections...</div>
+            <li class="usa-card tablet-lg:grid-col-6 widescreen:grid-col-4">
+                <div class="usa-card__container">
+                <div class="usa-card__header">
+                    <h2>2. Fetch Corrections</h2>
+                </div>
+                <div class="usa-card__body">
+                    <p>Retrieve and store correction data from eCFR API.</p>
+                </div>
+                <div class="usa-card__footer">
+                    <a href="#" class="usa-button" onclick="fetchCorrections()">Fetch Corrections</a>
+                </div>
+                </div>
+            </li>
+            <div id="loading-ftr" class="loading" style="display: none;">Fetching Title Relationships...</div>
+            <li class="usa-card tablet-lg:grid-col-6 widescreen:grid-col-4">
+                <div class="usa-card__container">
+                <div class="usa-card__header">
+                    <h2>3. Fetch Title Relationships</h2>
+                </div>
+                <div class="usa-card__body">
+                    <p>Retrieve and store title structure information and metadata data from eCFR API. This function is for determining Word Count per Agency.
+                        <br><em>Note:</em>Due to having a large processing time, each title must be retrieved separately.</p>
+                </div>
+                <div class="usa-card__footer">
+                    <a href="#" class="usa-button" onclick="fetchTitleRelationships()">Fetch Title Relationships</a>
+                </div>
+                </div>
+            </li>
+            <li class="usa-card tablet-lg:grid-col-6 widescreen:grid-col-4">
+                <div class="usa-card__container">
+                    <div class="usa-card__header">
+                        <h2>3.(Admin Use) Fetch All Title Relationships</h2>
+                    </div>
+                    <div class="usa-card__body">
+                        <p>Retrieve ALL title relationships from the eCFR API.</p>
+                        <p>Note: Even with high-speed connection this can take 20 mins.<br>
+                        For this reason, an option for Retrieving a single title is given above.</p>
+                    </div>
+                    <div class="usa-card__footer">
+                        <button id="fetchAllTitleRelationshipsButton" class="usa-button" style="background-color: red;">Retrieve ALL Title Relationships</button>
+                    </div>
+                </div>
+            </li>
+            <!-- <div id="loading-pcc" class="loading" style="display: none;">Populating Correction Counts...</div>
+            <li class="usa-card tablet-lg:grid-col-6 widescreen:grid-col-4">
+                <div class="usa-card__container">
+                    <div class="usa-card__header">
+                        <h2>4. Populate Correction Counts</h2>
+                    </div>
+                    <div class="usa-card__body">
+                        <p>Aggregate and store correction counts per agency in the database.</p>
+                    </div>
+                    <div class="usa-card__footer">
+                        <a href="#" class="usa-button" onclick="populateCorrectionCounts()">Populate Correction Counts</a>
+                    </div>
+                </div>
+            </li> -->
+        </ul>
+    </div>
+  </div>
+
+    <script>
+    async function fetchAgencies() {
+        try {
+            const loading = document.getElementById('loading-fa');
+            loading.style.display = 'block';
+
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 300000);
+
+            const response = await fetch('/api/ecfr/fetch-agencies', {
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+
+            if (!response.ok) throw new Error('Failed to fetch agencies');
+            const count = await response.json();
+            alert(`Fetched ${count} agencies`);
+        } catch (error) {
+            console.error('Error:', error);
+            alert(`Error fetching agencies: ${error.message}`);
+        } finally {
+            document.getElementById('loading-fa').style.display = 'none';
+        }
+    }
+
+    async function fetchCorrections() {
+        try {
+            const loading = document.getElementById('loading-fc');
+            loading.style.display = 'block';
+
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 300000);
+
+            const response = await fetch('/api/ecfr/fetch-corrections', { signal: controller.signal });
+            clearTimeout(timeoutId);
+
+            if (!response.ok) throw new Error('Failed to fetch corrections');
+            const count = await response.json();
+            alert(`Fetched ${count} corrections`);
+        } catch (error) {
+            console.error('Error:', error);
+            alert(`Error fetching corrections: ${error.message}`);
+        } finally {
+            document.getElementById('loading-fc').style.display = 'none';
+        }
+    }
+
+
+
+    async function fetchTitleRelationships() {
+        try {
+            const loading = document.getElementById('loading-ftr');
+            loading.style.display = 'block';
+
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 300000);
+
+            // Prompt the user to input a title number
+            const title = prompt("Enter the title number (between 1 and 50) to fetch relationships for:");
+            // Validate the title input to ensure it is an integer between 1 and 50
+            if (!title || isNaN(title) || title < 1 || title > 50) {
+                alert("Please enter a valid title number between 1 and 50.");
+                return;
+            }
+
+            const response = await fetch(`/api/ecfr/fetch-title-relationships?title=${title}`, { signal: controller.signal });
+            clearTimeout(timeoutId);
+
+            if (!response.ok) throw new Error('Failed to fetch title relationships');
+            const count = await response.json();
+            alert(`Fetched ${count} title relationships`);
+        } catch (error) {
+            console.error('Error:', error);
+            alert(`Error fetching title relationships: ${error.message}`);
+        } finally {
+            document.getElementById('loading-ftr').style.display = 'none';
+        }
+    }
+
+    async function populateCorrectionCounts() {
+        try {
+            const loading = document.getElementById('loading-pcc');
+            loading.style.display = 'block';
+
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 300000);
+
+            const response = await fetch('/api/ecfr/populate-correction-counts', {
+                method: 'POST',
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+
+            if (!response.ok) throw new Error('Failed to populate correction counts');
+
+            const result = await response.json();
+            console.log('API Response:', result); // Log the full response for debugging
+
+            if (result && result.Message) {
+                alert(result.Message);
+            } else {
+                alert('Correction counts populated successfully.');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert(`Error populating correction counts: ${error.message}`);
+        } finally {
+            document.getElementById('loading-pcc').style.display = 'none';
+        }
+    }
+
+    document.getElementById('fetchAllTitleRelationshipsButton').addEventListener('click', async () => {
+        try {
+            const response = await fetch('/api/Ecfr/fetch-all-title-relationships');
+            if (!response.ok) {
+                throw new Error(`Error: ${response.statusText}`);
+            }
+            const data = await response.json();
+            console.log('All Title Relationships:', data);
+            alert('All Title Relationships fetched successfully. Check console for details.');
+        } catch (error) {
+            console.error('Error fetching all title relationships:', error);
+            alert('Failed to fetch all title relationships.');
+        }
+    });
+    </script>
+
+  <script src="Content/js/uswds.min.js" type="text/javascript"></script>
+</body>
+</html>
